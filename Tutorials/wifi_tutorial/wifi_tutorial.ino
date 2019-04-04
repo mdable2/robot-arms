@@ -64,10 +64,6 @@ void loop() {
     Serial.println();
     Serial.println("disconnecting.");
     client.stop();
-
-  // do nothing forevermore:
-  for(;;)
-    ;
   }
   
   /*
