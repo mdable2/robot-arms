@@ -8,7 +8,11 @@
 const char* ssid     = "SM-G950U945";
 const char* password = "6303918673";
  
-const char* host = "wifitest.adafruit.com";
+const char* host = "192.168.43.235";
+const int httpPort = 65432;
+
+// Use WiFiClient class to create TCP connections
+WiFiClient client;
  
 void setup() {
   Serial.begin(115200);
@@ -36,25 +40,48 @@ void setup() {
   Serial.println(WiFi.subnetMask());
   Serial.print("Gateway: ");
   Serial.println(WiFi.gatewayIP());
+
+  if (!client.connect(host, httpPort)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+  Serial.print("connecting to ");
+  Serial.println(host);
 }
  
 int value = 0;
  
 void loop() {
+
+  while (client.available()) {
+    char c = client.read();
+    Serial.print(c);
+  }
+
+  // if the server's disconnected, stop the client:
+  if (!client.connected()) {
+    Serial.println();
+    Serial.println("disconnecting.");
+    client.stop();
+
+  // do nothing forevermore:
+  for(;;)
+    ;
+  }
+  
+  /*
   delay(5000);
   ++value;
  
-  Serial.print("connecting to ");
-  Serial.println(host);
-  
-  // Use WiFiClient class to create TCP connections
-  WiFiClient client;
-  const int httpPort = 80;
-  if (!client.connect(host, httpPort)) {
-    Serial.println("connection failed");
-    return;
+  while(client.available()){
+    char s = client.read();
+    if (s == -1) {
+      Serial.print("data not receieved");
+    }
+    Serial.print("data received: " + s);
   }
-  
+  /*
   // We now create a URI for the request
   String url = "/testwifi/index.html";
   Serial.print("Requesting URL: ");
@@ -71,7 +98,7 @@ void loop() {
     String line = client.readStringUntil('\r');
     Serial.print(line);
   }
+  */
   
-  Serial.println();
-  Serial.println("closing connection");
+  //Serial.println("closing connection");
 }
