@@ -1,38 +1,79 @@
+import sys
 import socket
 
-HOST = '192.168.43.235'  # Standard loopback interface address (localhost)
-PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+from _thread import *
+import threading
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.bind((HOST, PORT))
-    s.listen()
-    conn, addr = s.accept()
-    with conn:
-        print('Connected by', addr)
-        s = "Hello World!"
-        byte_str = s.encode()
-            # data = conn.recv(1024)
-            # if not data:
-            #     break
-        conn.send(byte_str)
+conns = []
+serverRunning = False
+
+def threaded(c):
+    while True:
+        data = c.recv(1024)
+        if not data:
+            print('Bye')
+            break
+        print(data)
+    c.close()
+    global conns 
+    conns.remove(c)
+
+def sockListen():
+    print("Waiting")
+    while True:
+        global serverRunning
+        if not serverRunning: break
+
+        (clientSock, address) = server.accept()
+        global conns
+        conns.append(clientSock)
+
+        with clientSock:
+            print(address, ' connected.')
+            s = "Hello World!"
+            byte_str = s.encode()
+            clientSock.send(byte_str)
+            start_new_thread(threaded, (clientSock,))
+    #serverClose()
+
+serverThread = threading.Thread(target = sockListen)
+serverSock = 0
+
+def startServer():
+    HOST = ""
+    PORT = 8888
+
+    serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serverSock.bind((HOST, PORT))
+    serverSock.listen(5)
+    print("Server created")
+
+    serverRunning = True
+    serverThread.start()
 
 
-# import http.server
-# import socketserver
+def serverClose():
+    serverRunning = False
+    for sock in conns:
+        sock.close()
+        conns.remove(sock)
 
-# PORT = 8080
-# Handler = http.server.SimpleHTTPRequestHandler
+    serverThread.join()
+    serverSock.close()
 
-# with socketserver.TCPServer(("", PORT), Handler) as httpd:
-#     print("serving at port", PORT)
-#     httpd.serve_forever()
+def main():
+    while 1:
+        cmd = input("> ")
+        if cmd == 'start server':
+            startServer()
+        elif cmd == 'close server':
+            serverRunning = 0;
+            serverClose()
+            serverThread.join()
+        else:
+            words = cmd.split(" ")
+            if words[0] == 1:
+                conns[0].send(cmd)
 
-#### Adafruit IP:
-# IP address: 
-# 10.0.0.169
-# Netmask: 255.255.255.0
-# Gateway: 10.0.0.1
-
-
-#### My IP: 
-# 10.0.0.82
+if __name__ == '__main__':
+    main()
