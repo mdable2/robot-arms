@@ -6,26 +6,32 @@ import threading
 
 conns = []
 serverRunning = False
+serverSock = 0
 
 def threaded(c):
-    while True:
+    global conns
+    global serverRunning
+    while serverRunning:
         data = c.recv(1024)
         if not data:
             print('Bye')
             break
         print(data)
-    c.close()
-    global conns 
+    c.close() 
     conns.remove(c)
 
 def sockListen():
-    print("Waiting")
-    while True:
-        global serverRunning
-        if not serverRunning: break
+    global serverSock
+    global serverRunning
+    global conns
 
-        (clientSock, address) = server.accept()
-        global conns
+    while True:
+        if not serverRunning: break
+        
+        (clientSock, address) = serverSock.accept()
+
+        if not serverRunning: break
+        print("Got client ", address[0], ":", address[1])
         conns.append(clientSock)
 
         with clientSock:
@@ -33,13 +39,15 @@ def sockListen():
             s = "Hello World!"
             byte_str = s.encode()
             clientSock.send(byte_str)
-            start_new_thread(threaded, (clientSock,))
-    #serverClose()
+            #start_new_thread(threaded, (clientSock,)) TODO Handle any robot responses
+    print("ended")
 
 serverThread = threading.Thread(target = sockListen)
-serverSock = 0
 
 def startServer():
+    global serverSock
+    global serverRunning
+    global serverThread
     HOST = ""
     PORT = 8888
 
@@ -53,26 +61,35 @@ def startServer():
 
 
 def serverClose():
+    global serverSock
+    global serverRunning
+    global serverThread
+    global conns
+
     serverRunning = False
+
     for sock in conns:
+        print("closing ", sock)
         sock.close()
         conns.remove(sock)
 
-    serverThread.join()
     serverSock.close()
+    serverSock.stop()
+    serverThread.join()
 
 def main():
+    global serverSock
+    global serverRunning
     while 1:
         cmd = input("> ")
         if cmd == 'start server':
             startServer()
         elif cmd == 'close server':
-            serverRunning = 0;
             serverClose()
-            serverThread.join()
         else:
             words = cmd.split(" ")
-            if words[0] == 1:
+            if words[0] == 1: # send to the first client 
+                byte_str = cmd.encode()
                 conns[0].send(cmd)
 
 if __name__ == '__main__':
