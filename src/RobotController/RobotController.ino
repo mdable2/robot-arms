@@ -1,5 +1,4 @@
 #include <Servo.h>
-#include <LiquidCrystal.h>
 
 Servo base, ud, fb;
 int pos;
@@ -10,23 +9,20 @@ const int magPin = 12;
 const int statePin = 2; 
 
 /* FSM:
-   0 Awaiting Startup - 204, 204, 0
-   0 -> -1- Start up (Connecting to wifi) - 204, 102, 0
-   1 -> -2- Server built - 102, 204, 0
-   2 -> -3- Game server connected - 0, 204, 0
-   3 -> -4- Game in progress - 0, 102, 204
+   0 Awaiting Startup
+   0 -> -1- Start up (Connecting to wifi)
+   1 -> -2- Server built
+   2 -> -3- Game server connected
+   3 -> -4- Game in progress
    4 -> -2- "Computer restart" 
 */
 int prevState = 0;
-int state = 0;
+int state;
 
 /* Values for RGB LED status indicator */
 const int rP = 3;
 const int gP = 4;
 const int bP = 5;
-
-const int rs = 5, en = 6, d4 = 8, d5 = 9, d6 = 10, d7 = 11;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void setup() {
   Serial.begin(9600);
@@ -39,39 +35,39 @@ void setup() {
 
   /* State change setup */
   pinMode(statePin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(statePin), stateReset, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(statePin), stateReset, RISING);
+  state = 0;
 
   /* Status LED setup */
   pinMode(rP, OUTPUT);
   pinMode(gP, OUTPUT);
   pinMode(bP, OUTPUT);
   updateStatusLED();
-  
-  /* Setup serial & send network info to ESP8266 */
-  Serial.println("StupidInternet");
-  delay(100);
-  Serial.println("Catpeople123?");
-  char buf[32];
-  Serial.readBytes(buf, 32);
-  Serial.println(buf);
 }
 
 void loop() {
-  switch (state) {
-    case 0:
-      break;
-    case 1:
-      //updateLCD();
-      connectToWifi();
-      break;
-    case 2:
-      //updateLCD();
-      break;
-    case 3:
-    case 4:
-      updateStatusLED();
-      break;
-    default:  break;
+  if (state) {
+    if (state == 1) {
+        Serial.println("1;SM-G950U945;6303918673.");
+        
+        while (!Serial.available()) { delay(5); }
+        
+          String rx_byte = Serial.readString();
+          if (rx_byte == "2") {
+            state = 2;
+            updateStatusLED();
+          }
+    }
+    else if (state == 2) {
+      
+    }
+    else if (state == 3) {
+      
+    }
+    else if (state == 4) {
+      
+    }
+    else { state = 2; } // set state to 2
   }
 }
 
@@ -127,16 +123,13 @@ void moveArm(char select, int pos) {
       }       
 } 
 
-void connectToWifi() {
-  
-}
-
 void stateReset() {
   prevState = state;
   
-  if (state = 0) state = 1;
+  if (state == 0) state = 1;
   else state = 2;  
   
+  Serial.println(state);
   updateStatusLED();
 }
 

@@ -86,6 +86,17 @@ def main():
             startServer()
         elif cmd == 'close server':
             serverClose()
+        elif cmd == 'connect':
+            ip = input('Server IP: ')
+            port = input('Server Port: ')
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            address = (ip, port)
+
+            msg = "It Works!"
+
+            sock.sendto(bytes(msg, "utf-8"), address)
+            sock.close()
         else:
             words = cmd.split(" ")
             if words[0] == 1: # send to the first client 
