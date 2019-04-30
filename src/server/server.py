@@ -88,14 +88,16 @@ def main():
             serverClose()
         elif cmd == 'connect':
             ip = input('Server IP: ')
-            port = input('Server Port: ')
+            port = input('Server Port: ') # TODO change from string to int
+            # 8888 for robot 1, 8899 for robot 2
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             address = (ip, port)
 
             msg = "It Works!"
 
-            sock.sendto(cmd.encode(), address)
+            sock.connect(address)
+            sock.send(msg.encode())
             sock.close()
         else:
             words = cmd.split(" ")
