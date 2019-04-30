@@ -95,7 +95,7 @@ def main():
 
             msg = "It Works!"
 
-            sock.sendto(bytes(msg, "utf-8"), address)
+            sock.sendto(cmd.encode(), address)
             sock.close()
         else:
             words = cmd.split(" ")

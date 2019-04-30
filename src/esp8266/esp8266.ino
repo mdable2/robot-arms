@@ -41,6 +41,8 @@ void loop() {
     int packetSize = sock.parsePacket();
     if (packetSize) {
         lcd.clear();
+        String s = String(packetSize);
+        lcd.print(s);
     }
   }
 }
