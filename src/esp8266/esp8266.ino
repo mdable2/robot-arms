@@ -18,7 +18,7 @@ String ssid, pswd;
 int state;
 
 // 8888 for robot 1, 8899 for robot 2
-const int port = 8888;
+const int port = 8899;
  
 void setup() {
   Serial.begin(9600);
@@ -49,13 +49,12 @@ void loop() {
   }
   else if(state == 2 || state == 3) {
     int packetSize = sock.parsePacket();
-
-    if (state == 2) { Serial.write("3"); state = 3; delay(5); }
     
     if (packetSize) {
         int len = sock.read(inUdpPacket, 255);
 
         if (len > 0) {
+          if (state == 2) { Serial.write("3"); state = 3; delay(5); }
           lcd.clear();
           String s = String(packetSize);
           String sp = "Packet Size: " + s;
@@ -65,8 +64,7 @@ void loop() {
           lcd.setCursor(0,1);
           lcd.print(packet);
           lcd.setCursor(0,0);
-          
-          Serial.write(packet);
+          Serial.write(inUdpPacket);
         }
     }
   }
@@ -74,22 +72,20 @@ void loop() {
 
 void interpretMsg() {
   char state = rx_buf[0];
+  
 
   if (state == '1') { // Read in Wi-Fi ssid and password data
     int getSsid = 1;
     ssid = "";
     pswd = "";
+    ssid = "SM-G950U945";
+    pswd = "6303918673";
     
-    for (int i = 2; i < 32; i++) {
-      if (rx_buf[i] == ';') { getSsid = 0; continue; }
-      if (rx_buf[i] == '.') break;
-      
-      if (getSsid)
-        ssid += rx_buf[i];
-      else
-        pswd += rx_buf[i];
+    for (int i = 0; i < 32; i++) {
+      lcd.clear();
+      lcd.print(String(rx_buf[i]));
+      delay(500);
     }
-    
     connectToWiFi();
   }
 }

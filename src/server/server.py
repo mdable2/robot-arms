@@ -74,7 +74,7 @@ def serverClose():
         conns.remove(sock)
 
     serverSock.close()
-    serverSock.stop()
+    #serverSock.stop()
     serverThread.join()
 
 def main():
@@ -88,8 +88,8 @@ def main():
             serverClose()
         elif cmd == 'connect':
             ip = input('Server IP: ')
-            port = input('Server Port: ') # TODO change from string to int
-            # 8888 for robot 1, 8899 for robot 2
+            port = input('Server Port: ')
+            port = int(port)
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             address = (ip, port)
@@ -98,7 +98,16 @@ def main():
 
             sock.connect(address)
             sock.send(msg.encode())
-            sock.close()
+            conns.append(sock)
+        elif cmd == 'send':
+            robot = input('Which robot?')
+            message = input('Send what?')
+            if robot is "1":
+                print("works")
+                conns[0].send(message.encode())
+            elif robot is "2":
+                conns[1].send(message.encode())
+
         else:
             words = cmd.split(" ")
             if words[0] == 1: # send to the first client 

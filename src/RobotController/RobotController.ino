@@ -74,8 +74,18 @@ void loop() {
     }
     else if (state == 3) {
       if ( Serial.available() ) {
-          Serial.readBytes(rx_buf, 32);
-          makeMove();
+          analogWrite(rP, 100);
+          analogWrite(gP, 0);
+          analogWrite(bP, 100);
+          Serial.readBytes(rx_buf, 32); // b,f,u, or m (magnet) as first char, then degrees if magnet then 1, end with period
+          char select = rx_buf[0];
+          String pos;
+          for (int i = 1; i < 32; i++) {
+            if (rx_buf[i] == '.') { break; }
+              pos += rx_buf[i];
+          }
+          int pos2 = pos.toInt();
+          moveArm(select, pos2);
       }
     }
     else if (state == 4) {
