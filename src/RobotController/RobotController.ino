@@ -37,6 +37,7 @@ void setup() {
   fb.attach(10); //White wire
   ud.attach(9); //Yellow wire
   pinMode(magPin, OUTPUT);
+  digitalWrite(magPin, LOW);
 
   /* State change setup */
   pinMode(statePin, INPUT_PULLUP);
@@ -80,12 +81,14 @@ void loop() {
           Serial.readBytes(rx_buf, 32); // b,f,u, or m (magnet) as first char, then degrees if magnet then 1, end with period
           char select = rx_buf[0];
           String pos;
-          for (int i = 1; i < 32; i++) {
-            if (rx_buf[i] == '.') { break; }
-              pos += rx_buf[i];
+          if (select == 'm' || select == 'b' || select == 'f' || select == 'u') {
+            for (int i = 1; i < 32; i++) {
+              if (rx_buf[i] == '.') { break; }
+                pos += rx_buf[i];
+            }
+            int pos2 = pos.toInt();
+            moveArm(select, pos2);
           }
-          int pos2 = pos.toInt();
-          moveArm(select, pos2);
       }
     }
     else if (state == 4) {
@@ -106,7 +109,12 @@ void makeMove() { // (x1,y1)(x2,y2)
 
 void moveArm(char select, int pos) {
   int currPos;
-  if (select != 'm') pos = map(pos, 0, 180, 1000, 2000);
+  if (select != 'm') {
+  pos = map(pos, 0, 180, 1000, 2000);
+              analogWrite(rP, 100);
+          analogWrite(gP, 150);
+          analogWrite(bP, 100);
+ }
   switch (select) {
          case 'b':
           currPos = map(base.read(), 0, 180, 1000, 2000);
