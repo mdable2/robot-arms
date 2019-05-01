@@ -8,6 +8,10 @@ const int magPin = 12;
 
 const int statePin = 2; 
 
+char rx_buf[32];
+
+char ssidPswd[32] = "1;SM-G950U945;6303918673.";
+
 /* FSM:
    0 Awaiting Startup
    0 -> -1- Start up (Connecting to wifi)
@@ -26,6 +30,7 @@ const int bP = 5;
 
 void setup() {
   Serial.begin(9600);
+  while(!Serial) {delay(1);}
   
   /* Robot Arm Servo & electro magnet Setup */
   base.attach(11); //Orange wire
@@ -48,27 +53,44 @@ void setup() {
 void loop() {
   if (state) {
     if (state == 1) {
-        Serial.println("1;SM-G950U945;6303918673.");
+        Serial.write(ssidPswd);
         
-        while (!Serial.available()) { delay(5); }
+        while (!Serial.available()) { delay(1); }
         
-          String rx_byte = Serial.readString();
-          if (rx_byte == "2") {
+          char rx_byte = Serial.read();
+          if (rx_byte == '2') {
             state = 2;
             updateStatusLED();
           }
     }
     else if (state == 2) {
-      
+      if ( Serial.available() ) {
+          char rx_byte = Serial.read();
+          if (rx_byte == '3') {
+            state = 3;
+            updateStatusLED();
+          }
+      }
     }
     else if (state == 3) {
-      
+      if ( Serial.available() ) {
+          Serial.readBytes(rx_buf, 32);
+          makeMove();
+      }
     }
     else if (state == 4) {
       
     }
     else { state = 2; } // set state to 2
   }
+}
+
+void makeMove() { // (x1,y1)(x2,y2)
+  char x1 = rx_buf[1];  
+  char y1 = rx_buf[3]; 
+  char x2 = rx_buf[6];  
+  char y2 = rx_buf[8]; 
+  
 }
 
 

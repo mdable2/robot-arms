@@ -8,9 +8,9 @@ const int rs = 4, en = 5, d4 = 13, d5 = 12, d6 = 14, d7 = 16;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 WiFiUDP sock;
+char inUdpPacket[256];
 
-const char *rx_buf;
-String rx_str = "";
+char rx_buf[32];
 
 String ip, sport, serverip;
 String ssid, pswd;
@@ -22,38 +22,65 @@ const int port = 8888;
  
 void setup() {
   Serial.begin(9600);
+  while(!Serial) {delay(1);}
+  
   lcd.display();
   lcd.begin(16, 2);
-  lcd.print("hello");
+
+  // Beginning message
+  lcd.setCursor(0,0);
+  lcd.print("Robots can play");
+  lcd.setCursor(0,1);
+  lcd.print("checkers too!");
+  lcd.setCursor(0,0);
+  
   state = 0;
 }
  
 void loop() {
   if (state == 0) {
-      while (Serial.available() > 0) {
-      rx_str = Serial.readStringUntil('.');
-      rx_buf = rx_str.c_str();
-
-      interpretMsg();
+      if ( Serial.available() ) {
+        Serial.read();
+        Serial.read();
+        Serial.readBytes(rx_buf, 32);
+  
+        interpretMsg();
       }
   }
-  else if(state == 2) {
+  else if(state == 2 || state == 3) {
     int packetSize = sock.parsePacket();
+
+    if (state == 2) { Serial.write("3"); state = 3; delay(5); }
+    
     if (packetSize) {
-        lcd.clear();
-        String s = String(packetSize);
-        lcd.print(s);
+        int len = sock.read(inUdpPacket, 255);
+
+        if (len > 0) {
+          lcd.clear();
+          String s = String(packetSize);
+          String sp = "Packet Size: " + s;
+          String packet = String(inUdpPacket);
+          lcd.setCursor(0,0);
+          lcd.print(sp);
+          lcd.setCursor(0,1);
+          lcd.print(packet);
+          lcd.setCursor(0,0);
+          
+          Serial.write(packet);
+        }
     }
   }
 }
 
 void interpretMsg() {
-  int len = strlen(rx_buf);
   char state = rx_buf[0];
 
-  if (state == '1') {
+  if (state == '1') { // Read in Wi-Fi ssid and password data
     int getSsid = 1;
-    for (int i = 2; i < len; i++) {
+    ssid = "";
+    pswd = "";
+    
+    for (int i = 2; i < 32; i++) {
       if (rx_buf[i] == ';') { getSsid = 0; continue; }
       if (rx_buf[i] == '.') break;
       
@@ -62,6 +89,7 @@ void interpretMsg() {
       else
         pswd += rx_buf[i];
     }
+    
     connectToWiFi();
   }
 }
@@ -69,6 +97,14 @@ void interpretMsg() {
 void connectToWiFi() {
   lcd.clear();
   lcd.print("Connecting");
+  lcd.setCursor(0,1);
+  lcd.print("to WiFi.");
+  lcd.setCursor(0,0);
+
+  delay(500);
+
+  lcd.clear();
+  lcd.print(ssid);
   lcd.setCursor(0,1);
   lcd.print("to WiFi.");
   lcd.setCursor(0,0);
@@ -99,5 +135,5 @@ void connectToWiFi() {
   lcd.setCursor(0,0);
   
   state = 2;  
-  Serial.println("2");
+  Serial.write("2");
 }
