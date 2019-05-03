@@ -1,4 +1,4 @@
-// Robot 1 WiFi Card Source Code
+// Robot WiFi Card Source Code
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
